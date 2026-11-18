@@ -6,20 +6,19 @@ describe('materialsApi', () => {
     localStorage.clear();
   });
 
-  it('возвращает пустые массивы при пустом или поврежденном localStorage', async () => {
+  it('возвращает пустые массивы при пустом localStorage и выбрасывает ошибку при поврежденном JSON', async () => {
     // 1. Пустой localStorage
     const emptyRes = await materialsApi.getAll(false);
     expect(emptyRes.materials).toEqual([]);
     expect(emptyRes.starredIds).toEqual([]);
 
-    // 2. Поврежденный JSON в localStorage (проверка блоков catch)
+    // 2. Поврежденный JSON в localStorage должен вызывать ошибку чтения
     localStorage.setItem('campusnode_materials', '{invalid-json');
-    localStorage.setItem('campusnode_starred_ids', 'not-an-array');
-
-    const corruptedRes = await materialsApi.getAll(false);
-    expect(corruptedRes.materials).toEqual([]);
-    expect(corruptedRes.starredIds).toEqual([]);
+    await expect(materialsApi.getAll(false)).rejects.toThrow(
+      'Ошибка чтения локальной базы материалов (поврежден JSON)'
+    );
   });
+
 
   it('выбрасывает ошибку при вызове getAll(true)', async () => {
     await expect(materialsApi.getAll(true)).rejects.toThrow(
