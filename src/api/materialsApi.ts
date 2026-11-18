@@ -9,11 +9,16 @@ const readMaterials = (): Material[] => {
   const raw = localStorage.getItem(MATERIALS_KEY);
   if (!raw) return [];
   try {
-    return JSON.parse(raw) as Material[];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      throw new Error('Некорректный формат данных в хранилище');
+    }
+    return parsed as Material[];
   } catch {
-    return [];
+    throw new Error('Ошибка чтения локальной базы материалов (поврежден JSON)');
   }
 };
+
 
 const readStarredIds = (): string[] => {
   const raw = localStorage.getItem(STARRED_KEY);
@@ -97,18 +102,29 @@ export const materialsApi = {
     const materials = readMaterials();
     let targetMaterial: Material | undefined;
 
-    const newEntry: FeedbackEntry = {
-      id: `typo-${Date.now()}`,
-      text,
-      authorName,
-      createdAt: new Date().toISOString(),
-    };
+    const normalizedText = text.trim().toLowerCase();
 
     const updated = materials.map((item) => {
       if (item.id === materialId) {
+        const existingTypos = item.typos || [];
+        const isDuplicate = existingTypos.some(
+          (entry) => entry.text.trim().toLowerCase() === normalizedText
+        );
+
+        if (isDuplicate) {
+          throw new Error('Такое сообщение об опечатке уже было отправлено для этого файла');
+        }
+
+        const newEntry: FeedbackEntry = {
+          id: `typo-${Date.now()}`,
+          text: text.trim(),
+          authorName,
+          createdAt: new Date().toISOString(),
+        };
+
         targetMaterial = {
           ...item,
-          typos: [newEntry, ...(item.typos || [])],
+          typos: [newEntry, ...existingTypos],
         };
         return targetMaterial;
       }
@@ -125,18 +141,29 @@ export const materialsApi = {
     const materials = readMaterials();
     let targetMaterial: Material | undefined;
 
-    const newEntry: FeedbackEntry = {
-      id: `rep-${Date.now()}`,
-      text,
-      authorName,
-      createdAt: new Date().toISOString(),
-    };
+    const normalizedText = text.trim().toLowerCase();
 
     const updated = materials.map((item) => {
       if (item.id === materialId) {
+        const existingReports = item.reports || [];
+        const isDuplicate = existingReports.some(
+          (entry) => entry.text.trim().toLowerCase() === normalizedText
+        );
+
+        if (isDuplicate) {
+          throw new Error('Такая жалоба уже была отправлена для этого файла');
+        }
+
+        const newEntry: FeedbackEntry = {
+          id: `rep-${Date.now()}`,
+          text: text.trim(),
+          authorName,
+          createdAt: new Date().toISOString(),
+        };
+
         targetMaterial = {
           ...item,
-          reports: [newEntry, ...(item.reports || [])],
+          reports: [newEntry, ...existingReports],
         };
         return targetMaterial;
       }
@@ -147,4 +174,4 @@ export const materialsApi = {
     localStorage.setItem(MATERIALS_KEY, JSON.stringify(updated));
     return targetMaterial;
   },
-};
+}

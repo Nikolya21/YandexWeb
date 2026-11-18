@@ -50,17 +50,36 @@ export const toggleStar = createAsyncThunk(
 
 export const submitTypo = createAsyncThunk(
   'materials/submitTypo',
-  async (payload: { materialId: string; text: string; authorName: string }) => {
-    return await materialsApi.addTypo(payload.materialId, payload.text, payload.authorName);
+  async (
+    payload: { materialId: string; text: string; authorName: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await materialsApi.addTypo(payload.materialId, payload.text, payload.authorName);
+    } catch (err) {
+      return rejectWithValue(
+        err instanceof Error ? err.message : 'Не удалось отправить сообщение об опечатке'
+      );
+    }
   }
 );
 
 export const submitReport = createAsyncThunk(
   'materials/submitReport',
-  async (payload: { materialId: string; text: string; authorName: string }) => {
-    return await materialsApi.addReport(payload.materialId, payload.text, payload.authorName);
+  async (
+    payload: { materialId: string; text: string; authorName: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await materialsApi.addReport(payload.materialId, payload.text, payload.authorName);
+    } catch (err) {
+      return rejectWithValue(
+        err instanceof Error ? err.message : 'Не удалось отправить жалобу'
+      );
+    }
   }
 );
+
 
 const materialsSlice = createSlice({
   name: 'materials',

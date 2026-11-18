@@ -29,25 +29,46 @@ export const FileCardItem: React.FC<FileCardItemProps> = ({
   const [reportText, setReportText] = useState('');
   const [typoText, setTypoText] = useState('');
   const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   const authorLabel = currentUser ? currentUser.username : 'Гость';
 
-  const handleSendReport = (e: React.FormEvent) => {
+  const handleSendReport = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedbackError(null);
+    setFeedbackNotice(null);
+
     if (!reportText.trim()) return;
-    dispatch(submitReport({ materialId: file.id, text: reportText.trim(), authorName: authorLabel }));
-    setReportText('');
-    setFeedbackNotice('Жалоба отправлена');
-    setTimeout(() => setFeedbackNotice(null), 2500);
+
+    try {
+      await dispatch(
+        submitReport({ materialId: file.id, text: reportText.trim(), authorName: authorLabel })
+      ).unwrap();
+      setReportText('');
+      setFeedbackNotice('Жалоба отправлена');
+      setTimeout(() => setFeedbackNotice(null), 2500);
+    } catch (err) {
+      setFeedbackError(typeof err === 'string' ? err : 'Ошибка при отправке жалобы');
+    }
   };
 
-  const handleSendTypo = (e: React.FormEvent) => {
+  const handleSendTypo = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedbackError(null);
+    setFeedbackNotice(null);
+
     if (!typoText.trim()) return;
-    dispatch(submitTypo({ materialId: file.id, text: typoText.trim(), authorName: authorLabel }));
-    setTypoText('');
-    setFeedbackNotice('Сообщение об опечатке сохранено');
-    setTimeout(() => setFeedbackNotice(null), 2500);
+
+    try {
+      await dispatch(
+        submitTypo({ materialId: file.id, text: typoText.trim(), authorName: authorLabel })
+      ).unwrap();
+      setTypoText('');
+      setFeedbackNotice('Сообщение об опечатке сохранено');
+      setTimeout(() => setFeedbackNotice(null), 2500);
+    } catch (err) {
+      setFeedbackError(typeof err === 'string' ? err : 'Ошибка при отправке опечатки');
+    }
   };
 
   return (
@@ -56,7 +77,10 @@ export const FileCardItem: React.FC<FileCardItemProps> = ({
         <button
           type="button"
           className={`corner-square-btn ${isSquareOpen ? 'active' : ''}`}
-          onClick={() => setIsSquareOpen((prev) => !prev)}
+          onClick={() => {
+            setIsSquareOpen((prev) => !prev);
+            setFeedbackError(null);
+          }}
           title="Действия с файлом: Жалоба, Опечатка, Звездочка"
         >
           {isSquareOpen ? '✕' : '⋮'}
@@ -84,7 +108,10 @@ export const FileCardItem: React.FC<FileCardItemProps> = ({
               rows={2}
               placeholder="Опишите причину жалобы..."
               value={reportText}
-              onChange={(e) => setReportText(e.target.value)}
+              onChange={(e) => {
+                setReportText(e.target.value);
+                if (feedbackError) setFeedbackError(null);
+              }}
             />
             <button type="submit" className="fb-btn fb-btn-danger">
               Отправить
@@ -97,7 +124,10 @@ export const FileCardItem: React.FC<FileCardItemProps> = ({
               rows={2}
               placeholder="Укажите, где опечатка..."
               value={typoText}
-              onChange={(e) => setTypoText(e.target.value)}
+              onChange={(e) => {
+                setTypoText(e.target.value);
+                if (feedbackError) setFeedbackError(null);
+              }}
             />
             <button type="submit" className="fb-btn fb-btn-warn">
               Записать
@@ -118,6 +148,7 @@ export const FileCardItem: React.FC<FileCardItemProps> = ({
         </div>
       )}
 
+      {feedbackError && <div className="feedback-error-toast">⚠️ {feedbackError}</div>}
       {feedbackNotice && <div className="feedback-toast">{feedbackNotice}</div>}
 
       <div className="file-body">

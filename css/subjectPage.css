@@ -236,6 +236,18 @@
   font-weight: 600;
 }
 
+.feedback-error-toast {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+
 .feedback-toast {
   background-color: #eaf4dc;
   color: #263b26;
