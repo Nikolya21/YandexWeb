@@ -10,6 +10,7 @@ import '../../css/subjectPage.css';
 
 const SUBJECTS_KEY = 'campusnode_subjects';
 const CURRENT_USER_KEY = 'campusnode_current_user';
+const BLOCKED_EXTENSIONS = ['EXE', 'BAT', 'SH', 'CMD', 'MSI', 'JS', 'VBS', 'APK'];
 
 interface SubjectFolder {
   id: string;
@@ -32,6 +33,7 @@ export const SubjectPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const { items, starredIds, status, error } = useSelector((state: RootState) => state.materials);
 
   const [subject, setSubject] = useState<SubjectFolder | null>(null);
@@ -66,6 +68,7 @@ export const SubjectPage: React.FC = () => {
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError(null);
     const files = e.target.files;
     if (!files || files.length === 0 || !subject || !currentUser || !isOwner) return;
 
@@ -74,6 +77,14 @@ export const SubjectPage: React.FC = () => {
 
     const parts = selectedFile.name.split('.');
     const ext = parts.length > 1 ? parts.pop()!.toUpperCase() : 'FILE';
+
+    if (BLOCKED_EXTENSIONS.includes(ext)) {
+      setUploadError(
+        `Загрузка файлов формата .${ext.toLowerCase()} запрещена из соображений безопасности.`
+      );
+      e.target.value = '';
+      return;
+    }
 
     dispatch(
       createMaterial({
@@ -128,6 +139,12 @@ export const SubjectPage: React.FC = () => {
                 )}
               </div>
             </header>
+
+            {uploadError && (
+              <div className="state-box error-box">
+                ⚠️ {uploadError}
+              </div>
+            )}
 
             {status === 'loading' && <div className="state-box">Загрузка файлов...</div>}
             {status === 'failed' && <div className="state-box error-box">{error}</div>}
