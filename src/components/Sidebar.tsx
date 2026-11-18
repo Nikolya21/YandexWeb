@@ -41,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </Link>
         )}
 
-        <a href="/index.html" className="nav-item">
+        <a href="./index.html" className="nav-item">
           <span>🌐</span> На лендинг
         </a>
       </nav>
